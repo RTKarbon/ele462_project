@@ -39,6 +39,7 @@ def main():
     os.system('hspice wire_model_1.sp > hspice.log')
     print 'hspice finished work'
 
+    os.system('echo "exit;" >> hspice_output_analyzer.m')
     os.system('matlab -nodisplay -nosplash -nodesktop -r "hspice_output_analyzer(%d)"' % int(options.N))
     print 'Matlab analyzer finished'
 
