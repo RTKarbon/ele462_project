@@ -1,0 +1,30 @@
+% Parameters
+N    = 100;
+Vdd  = 1.2;
+
+wave = loadsig('wire_model_1.tr0');
+time = wave(1).data;
+Vin  = wave(3).data;
+Vout = wave(2*N+3).data;
+
+n    = length(time);
+count_flag = 0;
+counter = 0;
+edges = 0;
+for i=1:n
+    if Vin(i)==Vdd/2
+        times = times + 1;
+        count_flag=1;
+    end
+    if (Vout(i)==Vdd/2)
+        count_flag=0;
+    end
+    if (count_flag==1)
+        counter = counter + 1;
+    end
+end
+
+figure
+hold on
+plot(time, Vin);
+plot(time, Vout, 'r');
