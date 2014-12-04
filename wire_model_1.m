@@ -1,14 +1,15 @@
 % Wire Model
 % Mohammad Shahrad
 function [elmore_delay] = wire_model_1(N)
-%N   =   100;            % Number of chain elements         
+%N   =   100;            % Number of chain elements 
+edges = 15;
 
 Len =   1000;           % Length of wire in micro-meters
 Wid =   0.12;           % Width in micro-meters
 Rs  =   0.065;          % Resistance per micro-meters sqaure
 Cpps=   30e-18;         % Parallel plate capacitance per micro-meters square
 Cfl =   40e-18;         % Fringing capacitance per micro-meter
-Ll  =   1e-10;
+Ll  =   0;
 Rw  =   Len*Rs/Wid;     % Wire resistance
 Cppw=   Len*Wid*Cpps;   % Wire parallel plate capacitance
 Cfw =   2*Len*Cfl;      % Wire fringing capacitance
@@ -50,30 +51,20 @@ end
 str = sprintf('C%d %d 0 %d',N,2*N+1,C(N)/2+C_ld);
 dlmwrite('wire_model_1.sp',str,'-append');
 
+
 str = sprintf('VSW 1 0 PULSE (0V vdd 5ns 1ns 1ns 5ns 10ns)');
 dlmwrite('wire_model_1.sp',str,'-append');
-str = sprintf('.meas tran tp_hl1 TRIG v(1) VAL=''vdd/2'' FALL=1 TARG v(%d) VAL=''vdd/2'' FALL=1',2*N+1);
-dlmwrite('wire_model_1.sp',str,'-append');
-str = sprintf('.meas tran tp_hl2 TRIG v(1) VAL=''vdd/2'' FALL=2 TARG v(%d) VAL=''vdd/2'' FALL=2',2*N+1);
-dlmwrite('wire_model_1.sp',str,'-append');
-str = sprintf('.meas tran tp_hl3 TRIG v(1) VAL=''vdd/2'' FALL=3 TARG v(%d) VAL=''vdd/2'' FALL=3',2*N+1);
-dlmwrite('wire_model_1.sp',str,'-append');
-str = sprintf('.meas tran tp_hl4 TRIG v(1) VAL=''vdd/2'' FALL=4 TARG v(%d) VAL=''vdd/2'' FALL=4',2*N+1);
-dlmwrite('wire_model_1.sp',str,'-append');
-str = sprintf('.meas tran tp_hl5 TRIG v(1) VAL=''vdd/2'' FALL=5 TARG v(%d) VAL=''vdd/2'' FALL=5',2*N+1);
-dlmwrite('wire_model_1.sp',str,'-append');
-str = sprintf('.meas tran tp_lh1 TRIG v(1) VAL=''vdd/2'' RISE=1 TARG v(%d) VAL=''vdd/2'' RISE=1',2*N+1);
-dlmwrite('wire_model_1.sp',str,'-append');
-str = sprintf('.meas tran tp_lh2 TRIG v(1) VAL=''vdd/2'' RISE=2 TARG v(%d) VAL=''vdd/2'' RISE=2',2*N+1);
-dlmwrite('wire_model_1.sp',str,'-append');
-str = sprintf('.meas tran tp_lh3 TRIG v(1) VAL=''vdd/2'' RISE=3 TARG v(%d) VAL=''vdd/2'' RISE=3',2*N+1);
-dlmwrite('wire_model_1.sp',str,'-append');
-str = sprintf('.meas tran tp_lh4 TRIG v(1) VAL=''vdd/2'' RISE=4 TARG v(%d) VAL=''vdd/2'' RISE=4',2*N+1);
-dlmwrite('wire_model_1.sp',str,'-append');
-str = sprintf('.meas tran tp_lh5 TRIG v(1) VAL=''vdd/2'' RISE=5 TARG v(%d) VAL=''vdd/2'' RISE=5',2*N+1);
-dlmwrite('wire_model_1.sp',str,'-append');
+for j=1:edges
+    str = sprintf('.meas tran tp_hl%d TRIG v(1) VAL=''vdd/2'' FALL=%d TARG v(%d) VAL=''vdd/2'' FALL=%d',j,j+1,2*N+1,j+1);
+    dlmwrite('wire_model_1.sp',str,'-append');
+end
+for j=1:edges
+    str = sprintf('.meas tran tp_lh%d TRIG v(1) VAL=''vdd/2'' RISE=%d TARG v(%d) VAL=''vdd/2'' RISE=%d',j,j+1,2*N+1,j+1);
+    dlmwrite('wire_model_1.sp',str,'-append');
+end
+
 dlmwrite('wire_model_1.sp','.options nomod post','-append');
-dlmwrite('wire_model_1.sp','.tran 1ps 500ns','-append');
+dlmwrite('wire_model_1.sp','.tran 10fs 400ns','-append');
 dlmwrite('wire_model_1.sp','.END wire_model_1','-append');
 
 % v   =   zeros(N+1,1);
@@ -91,4 +82,13 @@ dlmwrite('wire_model_1.sp','.END wire_model_1','-append');
 %hold on
 %plot(C)
 
-elmore_delay = (N+1)*Rw*(Cppw + Cfw)/(2*N);
+elmore_delay = log(2)*(N+1)*Rw*(Cppw + Cfw)/(2*N)
+
+
+exit;
+exit;
+exit;
+exit;
+exit;
+exit;
+exit;
