@@ -43,5 +43,10 @@ def main():
     os.system('matlab -nodisplay -nosplash -nodesktop -r "hspice_output_analyzer(%d)"' % int(options.N))
     print 'Matlab analyzer finished'
 
+    fin = open('./result_table.txt', 'r')
+    cont = fin.read()
+    fin.close()
+    print cont
+
 if __name__ == '__main__':
     main()
