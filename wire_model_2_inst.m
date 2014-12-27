@@ -1,10 +1,10 @@
-function [elmore_delay] = wire_model_2_inst(N,tech,metal_layer,fmin,fmax,Nf)
+function [elmore_delay] = wire_model_2_inst(N,tech,metal_layer,sigma_limit,fmin,fmax,Nf)
 %N   =   2500;            % Number of chain elements 
 edges = 15;
 
 Len_db = 50:50:2000;
 step = 0.01;
-sigma_limit = 0.25;
+%sigma_limit = 0.25;
 
 freq_db = linspace(fmin,fmax,Nf);             % 100MHz
 
@@ -12,6 +12,7 @@ meduim = 2;             % 1->Al 2->Cu
 permeability = [1.256665e-6,1.256629e-6];   % u
 conductivity = [3.5e7,5.96e7];              % sigma
 ro = [2.82e-8,1.68e-8];
+e_0 = 8.854187e-12;
 
 % Technology Variables
 %tech = 3;           % 1:90-nm 2:
@@ -19,6 +20,9 @@ switch tech
     case 90         % 90nm (Intel)
         % total 7 metal_layers
         % Because of the Carbon-doped Oxide (CDO) numbers are complicated
+        e_r = 3.1 + metal_layer*0.043;      % Relative permittivity
+        e = e_r*e_0;                        % Permittivity
+        
         metal_thick  = [.15,.256,.256,.32,.384,.576,.972];
         aspect_ratio = [1.4,1.6,1.6,1.6,1.6,1.6,1.8];
         metal_wid = metal_thick./aspect_ratio;
@@ -34,6 +38,8 @@ switch tech
         Ll  =   0.38e-12+metal_layer*0.5e-15;   % Self Inductance per micro-meter
     case 45         % 45nm (Intel)
         % total 9 metal_layers
+        e_r = 2.5 + metal_layer*0.0333;     % Relative permittivity
+        e = e_r*e_0;                        % Permittivity
         
         metal_thick  = [.144,.144,.144,.216,.252,.324,.504,.720,7];
         aspect_ratio = [1.8,1.8,1.8,1.8,1.8,1.8,1.8,1.8,0.4];
@@ -47,6 +53,8 @@ switch tech
         Ll  =   0.381e-12+metal_layer*0.67e-15; % Self Inductance per micro-meter
     case 32         % 32nm (Intel)
         % total 9 metal_layers
+        e_r = 2.1 + metal_layer*0.0333;     % Relative permittivity
+        e = e_r*e_0;                        % Permittivity
         
         lambda = 0.018;
         metal_thick  = [.095,.095,.095,.151,.204,.303,.388,.504,8];
@@ -130,21 +138,24 @@ for freq=1:length(freq_db)
             C   =   Cpp + Cf;
             tot_C(x,freq) = sum(C);
             % Stage inductance calculation
-            L   =   Lw/N*ones(1,N);
+            fac_l = (Cpp.*fac_w + Cf.*fac_h)./(Cpp+Cf);
+            L   =   Lw/N*ones(1,N)./fac_l;
 
             comp_elmore_delay = 0;
-            for i=1:N
-               comp_elmore_delay = comp_elmore_delay + R(i)*sum(C(i:end));
-            end
+
             % Disconnectivity check
             w_sign = sign(fac_w);
-            if (sum(w_sign)~=N)
-                comp_elmore_delay=NaN;
-            end
             h_sign = sign(fac_h);
-            if (sum(h_sign)~=N)
+            if ((sum(w_sign)~=N)||(sum(h_sign)~=N))
                 comp_elmore_delay=NaN;
+                tot_R(x,freq) = NaN;
+                tot_C(x,freq) = sum(C);
+            else
+                for i=1:N
+                   comp_elmore_delay = comp_elmore_delay + R(i)*sum(C(i:end));
+                end
             end
+
             %comp_el_del(x,y)=comp_elmore_delay;
             comp_el_del(x,freq)=comp_elmore_delay;
        % end
