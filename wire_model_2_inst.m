@@ -149,7 +149,6 @@ for freq=1:length(freq_db)
             if ((sum(w_sign)~=N)||(sum(h_sign)~=N))
                 comp_elmore_delay=NaN;
                 tot_R(x,freq) = NaN;
-                tot_C(x,freq) = sum(C);
             else
                 for i=1:N
                    comp_elmore_delay = comp_elmore_delay + R(i)*sum(C(i:end));
