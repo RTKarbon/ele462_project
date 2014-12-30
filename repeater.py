@@ -158,7 +158,8 @@ def genSpiceModel(fname_sp, wire_line, technology, freq):
 	file_sp.write(wire_string)
 
 	file_sp.write('\n\n')
-	file_sp.write(".include '/u/alavrov/ele462/project/%s.m'\n\n" % technology)
+	path = os.getcwd()
+	file_sp.write(".include '%s/%s.m'\n\n" % (path, technology))
 
 	for i in range(NUM_TIME_SAMPLES):
 		cnt = i # TODO: why +2 ?
@@ -209,8 +210,8 @@ def getCritDelay(gamma, techn):
 
 def getWireDelay(wire_line, techn, freq):
 	genSpiceModel('tmp_wire.sp', wire_line, techn, freq)
-	print "Running HSPICE from:",
-	print time.strftime("%H:%M:%S")
+	#print "Running HSPICE from:",
+	#print time.strftime("%H:%M:%S")
 	os.system('hspice tmp_wire.sp > tmp_wire.log 2> time.log')
 	return getTplh('tmp_wire.log')
 
@@ -240,7 +241,7 @@ def getNumStages(wire_line, crit_delay, one_stage_delay, techn, freq): # rename
 	num_stages = num_st_est
 	if tmp_delay < crit_delay:
 		while tmp_delay < crit_delay:
-			print "Current stage number: %d; delay: %e" % (num_stages, tmp_delay)
+			#print "Current stage number: %d; delay: %e" % (num_stages, tmp_delay)
 			if num_stages >= len(stages):
 				return len(stages)
 			tmp_wire.appendStage(stages[num_stages])
@@ -248,7 +249,7 @@ def getNumStages(wire_line, crit_delay, one_stage_delay, techn, freq): # rename
 			tmp_delay = getWireDelay(tmp_wire, techn, freq)
 	elif tmp_delay > crit_delay:
 		while tmp_delay > crit_delay:
-			print "Current stage number: %d; delay: %e" % (num_stages, tmp_delay)
+			#print "Current stage number: %d; delay: %e" % (num_stages, tmp_delay)
 			tmp_wire.removeStage(1)
 			num_stages -= 1
 			tmp_delay = getWireDelay(tmp_wire, techn, freq)
@@ -291,7 +292,7 @@ def postInsertInverters(init_wire, inv_size, techn, crit_delay, ideal_one_st_del
 		res_wire.appendBuffer(inv)
 
 		stages = stages[num:]
-		print "Remained num of stages %d" % len(stages)
+		#print "Remained num of stages %d" % len(stages)
 		tmp_wire = WireLine()
 		for s in stages:
 			tmp_wire.appendStage(s)
@@ -317,6 +318,7 @@ def processData(fname_csv):
 	wire_line.appendStage(stage_list)
 	wire_line.out_cap = out_cap
 	delays_of_wire = list()
+	inv_for_wire = list()
 	# r_pul = 1.306666667 # read from csv
 	# l_pul = 0.0000000000003805
 	# c_pul = 1.0077968456205E-16
@@ -341,6 +343,7 @@ def processData(fname_csv):
 	no_rep_delay = getWireDelay(wire_line, technology, freq)
 	print "Delay without repeaters: %e\n" % no_rep_delay
 	delays_of_wire.append(no_rep_delay)
+        inv_for_wire.append(wire_line.inv_cnt)
 
 	opt_inv_size = getInvSize(r_pul, c_pul, technology)
 	print "Optimal inverter size: %d\n" % opt_inv_size
@@ -359,6 +362,7 @@ def processData(fname_csv):
 	def_rep_wire_delay = getWireDelay(def_rep_wire, technology, freq)
 	print "Delay with default placing of repeaters: %e" % def_rep_wire_delay
 	delays_of_wire.append(def_rep_wire_delay)
+        inv_for_wire.append(def_rep_wire.inv_cnt)
 	print "Number of repeaters: %d" % def_rep_wire.inv_cnt
 	print
 
@@ -369,6 +373,7 @@ def processData(fname_csv):
 	adv_rep_wire_delay = getWireDelay(adv_rep_wire, technology, freq)
 	print "Delay with advanced placing of repeaters: %e" % adv_rep_wire_delay
 	delays_of_wire.append(adv_rep_wire_delay)
+        inv_for_wire.append(adv_rep_wire.inv_cnt)
 	print "Number of repeaters: %d" % adv_rep_wire.inv_cnt
 	print
 
@@ -377,15 +382,24 @@ def processData(fname_csv):
 	for i in range(len(delays_of_wire)):
 		cond_comma = ',' if (i != (len(delays_of_wire)-1)) else ''
 		fout.write('%e%s' % (delays_of_wire[i],cond_comma))
-	fout.close()
+        fout.write('\n')
+        for i in range(len(inv_for_wire)):
+                cond_comma = ',' if (i != (len(inv_for_wire)-1)) else ''
+                fout.write('%e%s' % (inv_for_wire[i],cond_comma))
+	fout.write('\n')
+	fout.write('0,%e,%e' % (opt_inv_size, opt_inv_size))
+        fout.write('\n')
+        fout.close()
 
 def main():
-	dir_name = 'model_data_N2000'
+	dir_name = 'test_model' #'model_data_N2000_2mm_width'
 	dir_path = os.path.join(os.getcwd(), dir_name)
 	files_in_dir = os.listdir(dir_path)
 	for f in files_in_dir:
-		m = re.match(r'data.*pc\.csv',f)
+		m = re.match(r'data',f)
 		if m != None:
+                    m = re.search(r'result',f)
+                    if m == None:
 			processData(dir_name+'/'+f)
 
 	# processData('Data/short.csv')
