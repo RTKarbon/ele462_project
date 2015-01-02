@@ -379,14 +379,16 @@ def processData(fname_csv):
 
 	fout_name = fname_csv[:-4] + '_result.csv'
 	fout = open(fout_name, 'w')
+	#TODO: make a function or use csvwriter
 	for i in range(len(delays_of_wire)):
-		cond_comma = ',' if (i != (len(delays_of_wire)-1)) else ''
+		cond_comma = ',' if (i != (len(delays_of_wire)-1)) else '\n'
+		fout.write('d_%s%s' % (i+1,cond_comma))
+	for i in range(len(delays_of_wire)):
+		cond_comma = ',' if (i != (len(delays_of_wire)-1)) else '\n'
 		fout.write('%e%s' % (delays_of_wire[i],cond_comma))
-        fout.write('\n')
-        for i in range(len(inv_for_wire)):
-                cond_comma = ',' if (i != (len(inv_for_wire)-1)) else ''
-                fout.write('%e%s' % (inv_for_wire[i],cond_comma))
-	fout.write('\n')
+	for i in range(len(inv_for_wire)):
+		cond_comma = ',' if (i != (len(inv_for_wire)-1)) else '\n'
+		fout.write('%e%s' % (inv_for_wire[i],cond_comma))
 	fout.write('0,%e,%e' % (opt_inv_size, opt_inv_size))
         fout.write('\n')
         fout.close()
